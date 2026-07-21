@@ -72,6 +72,10 @@ OPENAI_MODEL=gpt-5.6-terra
 
 Never commit `.env.local`. Environment files are ignored by Git.
 
+## License
+
+Released under the [MIT License](LICENSE).
+
 ## API routes
 
 ### `GET /api/jira/graph?project=SCRUM`
@@ -129,4 +133,3 @@ Possible next milestones:
 - Markdown/PDF review-plan export
 - Components, owners, releases, and deployment signals
 - Evaluation fixtures for citation accuracy and unsupported-claim refusal
-
