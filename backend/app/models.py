@@ -28,3 +28,14 @@ class ImpactResponse(BaseModel):
     edges: list[ImpactEdge]
     recommendations: list[str]
     warnings: list[str] = []
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+class ChatRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+    root_issue: str
+    depth: int = Field(default=2, ge=1, le=3)
+    selected_issue: str | None = None
+    history: list[ChatMessage] = []
