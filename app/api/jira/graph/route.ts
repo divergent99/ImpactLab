@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   if (!/^[A-Z][A-Z0-9_\-]{1,19}$/.test(project)) {
     return Response.json({ detail: "Invalid Jira project key." }, { status: 400 });
   }
-  const fields = "summary,status,priority,issuetype,issuelinks,parent,subtasks,description";
+  const fields = "summary,status,priority,issuetype,issuelinks,parent,subtasks,description,labels";
   const url = `${baseUrl}/rest/api/3/search/jql?jql=${encodeURIComponent(`project = ${project} ORDER BY key`)}&maxResults=50&fields=${fields}`;
   const response = await fetch(url, {
     headers: {
@@ -53,6 +53,22 @@ export async function GET(request: Request) {
     const parent = issue.fields.parent?.key;
     if (parent && nodes[parent]) {
       edgeMap.set(`${parent}::${issue.key}`, { source: parent, target: issue.key, label: "Parent / child", evidence: `${issue.key} is a child of ${parent} in Jira.`, confidence: 1, explicit: true });
+    }
+  });
+
+  const labelIndex = new Map<string, string[]>();
+  jiraIssues.forEach((issue) => {
+    (issue.fields.labels || []).forEach((label: string) => {
+      labelIndex.set(label, [...(labelIndex.get(label) || []), issue.key]);
+    });
+  });
+  labelIndex.forEach((keys, label) => {
+    for (let i = 0; i < keys.length; i++) {
+      for (let j = i + 1; j < keys.length; j++) {
+        const id = [keys[i], keys[j]].sort().join("::");
+        if (edgeMap.has(id)) continue;
+        edgeMap.set(id, { source: keys[i], target: keys[j], label: "Shared label", evidence: `${keys[i]} and ${keys[j]} are both tagged "${label}" in Jira.`, confidence: 0.6, explicit: false });
+      }
     }
   });
 
