@@ -21,3 +21,5 @@
 @media(max-width:760px){.summaryStrip{grid-template-columns:1fr}.summaryStrip>div:first-child{grid-column:auto}.summaryStrip>div{min-height:82px;border-right:0!important}.graphCanvas{height:560px}}
 @media(max-width:760px){.edgeLabel{font-size:6px;padding:2px 4px}.demoBadge{display:flex}}
 .summaryStrip{margin-top:-8px}
+.rootBadges{margin-top:10px}
+.rootDescription{margin-top:10px;font-size:10px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
