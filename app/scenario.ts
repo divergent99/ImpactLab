@@ -19,6 +19,7 @@ export const edges = [
   { source: "SCRUM-2", target: "SCRUM-4", label: "Parent / child", evidence: "SCRUM-4 is an implementation child of SCRUM-2.", confidence: 1, explicit: true },
   { source: "SCRUM-2", target: "SCRUM-8", label: "Incident dependency", evidence: "The duplicate-charge incident is blocked by the idempotency fix.", confidence: 1, explicit: true },
   { source: "SCRUM-3", target: "SCRUM-5", label: "Parent / child", evidence: "SCRUM-5 validates the retry behavior implemented by SCRUM-3.", confidence: 1, explicit: true },
+  { source: "SCRUM-4", target: "SCRUM-7", label: "Shared label", evidence: "SCRUM-4 and SCRUM-7 are both tagged \"reliability-q3\" in Jira.", confidence: 0.6, explicit: false },
 ] as const;
 
 export const recommendations = [
