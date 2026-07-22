@@ -66,20 +66,28 @@ export default function Home() {
   const [issueData, setIssueData] = useState<Record<IssueKey, GraphIssue>>(issues);
   const [edgeData, setEdgeData] = useState<GraphEdge[]>(edges.map((edge) => ({ ...edge })));
   const [jiraMode, setJiraMode] = useState<"loading" | "live" | "fixture">("loading");
+  const [showExplicit, setShowExplicit] = useState(true);
+  const [showParentChild, setShowParentChild] = useState(true);
+  const [showShared, setShowShared] = useState(true);
   const [chat, setChat] = useState<Array<{ role: "user" | "assistant"; text: string }>>([
     { role: "assistant", text: "Ask about risk, ownership, dependencies, or why an issue appears. I’ll answer from the visible Jira evidence." },
   ]);
   const issue = issueData[selected];
-  const visibleKeys = useMemo(() => keysWithinDepth(activeRoot, depth, edgeData), [activeRoot, depth, edgeData]);
+  const filteredEdges = useMemo(() => edgeData.filter((edge) => {
+    if (edge.label === "Parent / child") return showParentChild;
+    if (edge.explicit) return showExplicit;
+    return showShared;
+  }), [edgeData, showExplicit, showParentChild, showShared]);
+  const visibleKeys = useMemo(() => keysWithinDepth(activeRoot, depth, filteredEdges), [activeRoot, depth, filteredEdges]);
   const visibleNodes = useMemo(() => nodes.filter((node) => visibleKeys.has(node.key)), [visibleKeys]);
-  const visibleEdges = useMemo(() => edgeData.filter((edge) => visibleKeys.has(edge.source) && visibleKeys.has(edge.target)), [visibleKeys, edgeData]);
+  const visibleEdges = useMemo(() => filteredEdges.filter((edge) => visibleKeys.has(edge.source) && visibleKeys.has(edge.target)), [visibleKeys, filteredEdges]);
   const blockingLinks = useMemo(() => visibleEdges.filter((edge) => edge.label.toLowerCase().includes("block")).length, [visibleEdges]);
   const childWork = useMemo(() => visibleNodes.filter((node) => issueData[node.key].type === "Subtask").length, [visibleNodes, issueData]);
   const elevatedRisk = useMemo(() => visibleNodes.filter((node) => ["High", "Highest"].includes(issueData[node.key].priority)).length, [visibleNodes, issueData]);
 
   const relatedEdges = useMemo(
-    () => edgeData.filter((edge) => edge.source === selected || edge.target === selected),
-    [selected, edgeData],
+    () => filteredEdges.filter((edge) => edge.source === selected || edge.target === selected),
+    [selected, filteredEdges],
   );
 
   useEffect(() => {
@@ -183,7 +191,7 @@ export default function Home() {
       </section>
 
       <section className="summaryStrip">
-        <div><span>ROOT CHANGE</span><strong>{activeRoot}</strong><small>{issueData[activeRoot].summary}</small></div>
+        <div><span>ROOT CHANGE</span><strong>{activeRoot}</strong><small>{issueData[activeRoot].summary}</small><div className="badges rootBadges"><span>{issueData[activeRoot].status}</span><span className={issueData[activeRoot].priority === "Highest" ? "danger" : ""}>{issueData[activeRoot].priority}</span></div><p className="rootDescription">{issueData[activeRoot].description}</p></div>
         <div><span>AFFECTED WORK</span><strong>{Math.max(visibleNodes.length - 1, 0)}</strong><small>{visibleEdges.length} visible relationships</small></div>
         <div><span>BLOCKING LINKS</span><strong>{blockingLinks}</strong><small>Explicit dependency blockers</small></div>
         <div><span>ELEVATED RISK</span><strong className="risk">{elevatedRisk}</strong><small>High or highest priority</small></div>
@@ -196,7 +204,7 @@ export default function Home() {
         <aside className="controls panel">
           <p className="panelLabel">GRAPH CONTROLS</p><label>Traversal depth <b>{depth}</b></label><input type="range" min="1" max="3" value={depth} onChange={(e) => setDepth(Number(e.target.value))} />
           <div className="legend"><span><i className="dot rootDot" /> Root change</span><span><i className="dot directDot" /> Direct impact</span><span><i className="dot transitiveDot" /> Transitive impact</span></div><hr />
-          <p className="panelLabel">RELATIONSHIPS</p><label className="check"><input type="checkbox" defaultChecked /> Explicit Jira links</label><label className="check"><input type="checkbox" defaultChecked /> Parent / child</label><label className="check"><input type="checkbox" defaultChecked /> Shared labels</label>
+          <p className="panelLabel">RELATIONSHIPS</p><label className="check"><input type="checkbox" checked={showExplicit} onChange={(e) => setShowExplicit(e.target.checked)} /> Explicit Jira links</label><label className="check"><input type="checkbox" checked={showParentChild} onChange={(e) => setShowParentChild(e.target.checked)} /> Parent / child</label><label className="check"><input type="checkbox" checked={showShared} onChange={(e) => setShowShared(e.target.checked)} /> Shared labels</label>
           <div className="trustNote"><b>Evidence rule</b><p>No issue appears without a traceable Jira relationship or shared signal.</p></div>
         </aside>
 
